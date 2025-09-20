@@ -1,0 +1,84 @@
+%滑窗恢复实时跟踪点迹
+clc
+clear
+load ../online_track_data.mat
+addpath('../Data_Generation/')
+config = readyaml('../../config.yaml');
+seq_len = config.seq_len;
+pred_len = config.pred_len;
+N = config.N_track;
+load ("../network_output/InforMTP/" + "tracked.mat");
+Out_net = tracked;
+[Out_net]=data_scale(Out_net, 0);
+
+m = size(Out_net, 1);
+n = size(Out_net, 2);
+X_revised = cell(m, 1);
+IF_pre = cell(m, 1);
+
+for i = 1:m
+    x_revised = zeros(n, seq_len+1, 2);
+    If_pre = zeros(n, pred_len, 2);
+    for k = 1:n
+        out_net = reshape(Out_net(i, k, :, :), [size(Out_net, 3), size(Out_net, 4)]);
+        z = squeeze(Z_Cart(i, k:k+seq_len+pred_len, :));
+        [x_revised(k, :, :), If_pre(k, :, :)] = data_inv(out_net,z,seq_len, pred_len);
+    end
+    X_revised{i} = x_revised;
+    IF_pre{i} = If_pre;
+end
+
+IF_out = cell(m, 1);
+for i = 1:m
+    IF_out{i}(1:seq_len+1, :) = squeeze(X_revised{i}(1, :, :));
+    for t = seq_len+2:N-pred_len
+       IF_out{i}(t, :) = X_revised{i}(t-seq_len, end, :);
+    end
+end
+
+save("../Revised_data/InforMTP/"+"IF_out.mat","IF_out");
+save("../Revised_data/InforMTP/"+"IF_pre.mat","IF_pre");
+
+%% 绘图
+
+id = 1;
+
+t_start = seq_len+1;
+t_end = N-pred_len;
+figure(1)
+plot(X(id, :, 1), X(id, :, 2), 'k','LineWidth',1);
+hold on
+plot(Z_Cart(id, : , 1), Z_Cart(id, :, 2), '+', 'MarkerSize', 6);
+hold on
+plot(IF_out{id}(:, 1), IF_out{id}(:, 2), 'LineStyle','--','LineWidth',2);
+hold on
+plot(X(id, t_start, 1), X(id, t_start, 2), 'o','LineWidth',1.5,'MarkerSize',10);
+hold on
+plot(X(id, t_end, 1), X(id, t_end, 2), '>','LineWidth',1.5,'MarkerSize',10);
+
+legend('True', 'Measurements', 'InforMTP', 'Start for Filtering','End for Filtering');
+xlabel('x(m)')
+ylabel('y(m)')
+title('Filtering Results');
+axis equal
+
+
+pred_step = 4;
+pre_start = t_start+pred_step;
+pre_end = t_end+pred_step;
+
+figure(2)
+plot(X(id, :, 1), X(id, :, 2), 'k','LineWidth',1.5);
+hold on
+plot(Z_Cart(id, : , 1), Z_Cart(id, :, 2), '+', 'MarkerSize', 6);
+hold on
+plot(IF_pre{id}(:, pred_step, 1), IF_pre{id}(:, pred_step, 2), 'LineStyle','--','LineWidth',2);
+hold on
+plot(X(id, pre_start, 1), X(id, pre_start, 2), 'o','LineWidth',1.5,'MarkerSize',10);
+hold on
+plot(X(id, pre_end, 1), X(id, pre_end, 2), '>','LineWidth',1.5,'MarkerSize',10);
+legend('True', 'Measurements', 'InforMTP', 'Start for Pre', 'End for Pre');
+xlabel('x(m)')
+ylabel('y(m)')
+title([num2str(pred_step) '-scan Pre']);
+axis equal

@@ -1,0 +1,17 @@
+M: 200000
+M_track: 200
+N_track: 100
+train_epochs: 10
+Lambda: 25
+seq_len: 30
+label_len: 30
+pred_len: 5
+T: 1
+R_max: 100000
+V_min: 0
+V_max: 340
+a_max: 10
+alpha_max: 10
+R: 70
+Q1: 1
+Q2: 0.1
