@@ -2,7 +2,7 @@
 
 This repository is designed to address the radar maneuvering target tracking problem. The project uses Informer as the baseline to achieve real-time tracking and multi-scan prediction.
 
-And this is the official implementation of article "Informer-Based Joint Tracking and Trajectory Prediction of Maneuvering Radar Targets". If you find this work helpful for your research, please cite this paper
+And this is the official implementation of article "__Informer-Based Joint Tracking and Trajectory Prediction of Maneuvering Radar Targets__". If you find this work helpful for your research, please cite this paper
 
 ## Requirements
 
